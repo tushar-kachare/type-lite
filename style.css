@@ -84,6 +84,8 @@ body {
 .allSelect:hover {
   background-color: #81d4fa;
   transform: scale(1.1);
+  color: #121212;
+  font-weight: bold;
 }
 
 /* main section typing section */
