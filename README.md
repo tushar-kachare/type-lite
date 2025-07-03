@@ -2,7 +2,7 @@
 
 **TypeLite** is a sleek and minimal typing speed test application that challenges your typing accuracy and speed. Built using **HTML**, **CSS**, and **Vanilla JavaScript**, it provides both time-based and word-count-based tests with live feedback on performance.
 
-🚀 **Live Demo**: [type-lite.vercel.app](https://type-lite.vercel.app)
+🚀 **Live Demo**: [TypeLite](https://type-lite.vercel.app)
 
 ---
 
