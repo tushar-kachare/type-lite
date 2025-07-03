@@ -102,7 +102,6 @@ function getWords(data) {
 }
 
 const taskbarSelect = async function (num) {
-  // console.log(num);
   if (num > 0) {
     src = `${orginalSrc}${num}`;
   } else {
@@ -192,7 +191,6 @@ const setGameForWords = async function (totalWords) {
   timeRem = 0;
   await taskbarSelect(totalWords);
   storeLetters();
-  // console.log(allLetters);
   startGameForWords();
 };
 
@@ -206,12 +204,10 @@ function startGameForWords() {
   Int = setInterval(() => {
     if (ind >= allLetters.length - 2) {
       clearInterval(Int);
-      console.log(ind);
       document.removeEventListener("keydown", keydownHandler);
       resetGame(correctLetters, timeRem);
       return;
     }
-    console.log("Hi");
 
     timeRem += 1;
     timer.textContent = timeRem;
@@ -277,8 +273,6 @@ function resetGame(correctLetters, secondsElapsed) {
 
 function showStats(correct) {
   game.innerHTML = "";
-  // console.log(correct);
-  // console.log(totalKeys);
 
   let accuracy = ((correct / totalKeys) * 100).toFixed(2); // "92.00"
   if (totalKeys > 0)
