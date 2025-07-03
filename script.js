@@ -1,16 +1,76 @@
-src = "https://random-word-api.vercel.app/api?words=";
+const orginalSrc = "https://random-word-api.vercel.app/api?words=";
+let src = "https://random-word-api.vercel.app/api?words=";
+let keydownHandler = null;
 
 const select = document.querySelector(".select ");
 const game = document.querySelector(".game");
 const timer = document.querySelector(".timer");
 const selectAns = document.querySelector(".selectAns");
-const selectChilds = document.querySelectorAll('.allSelect')
+const selectChilds = document.querySelectorAll(".allSelect");
 
-let allLetters = []
-timer.textContent = ''
+let allLetters = [];
+timer.textContent = "";
 let timeRem;
-let totalWords;
-let WPM;
+let totalWords = 0;
+let WPM = 0;
+let totalKeys = 0;
+let Int;
+
+// checking for start on Time / Words
+function selectAll() {
+  select.addEventListener("click", (e) => {
+    totalWords = 0;
+    if (e.target.className !== "select") {
+      // Reset styles
+      document.querySelectorAll(".select span").forEach((span) => {
+        span.style.backgroundColor = "#3c3c3c";
+        span.style.color = "black";
+      });
+
+      e.target.style.color = "white";
+      e.target.style.backgroundColor = "#4fc3f7";
+
+      isTimeSelection = e.target.textContent === "Time";
+
+      const options = isTimeSelection ? [15, 30, 60, 120] : [10, 25, 50, 100];
+      updateSelectAns(options);
+    }
+  });
+
+  selectAns.addEventListener("click", (e) => {
+    if (e.target.tagName !== "SPAN") return;
+
+    // Reset styles
+    document.querySelectorAll(".selectAns span").forEach((span) => {
+      span.style.backgroundColor = "#3c3c3c";
+      span.style.color = "black";
+    });
+
+    e.target.style.color = "white";
+    e.target.style.backgroundColor = "#4fc3f7";
+
+    allLetters = [];
+
+    if (isTimeSelection) {
+      timeRem = parseInt(e.target.textContent);
+      setGameForTime();
+    } else {
+      totalWords = parseInt(e.target.textContent);
+      setGameForWords(totalWords);
+    }
+  });
+}
+
+selectAll();
+
+// setting game for Time duration
+const setGameForTime = async function () {
+  await taskbarSelect();
+  storeLetters();
+  startGameforTime();
+};
+
+// Genrate words and adding to game
 const generateWords = function (str) {
   wordList = str.split(" ");
   wordList.forEach((word) => {
@@ -31,11 +91,12 @@ const generateWords = function (str) {
   });
 };
 
+// creating string of letters with spaced
 function getWords(data) {
   str = "";
 
   data.forEach((e) => {
-    str += e + " " + " ";
+    str += e + " ";
   });
   return str;
 }
@@ -43,9 +104,9 @@ function getWords(data) {
 const taskbarSelect = async function (num) {
   // console.log(num);
   if (num > 0) {
-    src = `${src}${num}`;
+    src = `${orginalSrc}${num}`;
   } else {
-    src = `${src}100`;
+    src = `${orginalSrc}95`;
   }
 
   const res = await fetch(src);
@@ -57,108 +118,197 @@ const taskbarSelect = async function (num) {
 
 function storeLetters() {
   let childSpans = game.childNodes;
-  childSpans.forEach(e => {
+  childSpans.forEach((e) => {
     let letters = e.childNodes;
-    allLetters.push(...letters)
-  })
-}
-
-const setUpGame = async function(words) {
-  await taskbarSelect(words)
-  storeLetters();
-  startGame();
+    allLetters.push(...letters);
+  });
 }
 
 function updateSelectAns(arr) {
   let i = 0;
-  selectChilds.forEach(child => {
+  selectChilds.forEach((child) => {
     child.textContent = arr[i];
     i++;
-  })
+  });
 }
-select.addEventListener("click", (e) => {
-  if(e.target.className != 'select') {
-    e.target.style.color = 'white'
-    const isTime = e.target.textContent === "Time";
-    if (isTime) {
-      updateSelectAns([15,30,60,120])
-      selectAns.addEventListener("click", (check) => {
-          timeRem = check.target.textContent
-          check.target.style.color = 'white'
-          allLetters = []
-          setUpGame();
-       });
-    }
-    else {
-      updateSelectAns([10,25,50,100])
-      selectAns.addEventListener("click", (e) => {
-        totalWords = e.target.textContent
-        allLetters = []
-        setUpGame(totalWords);
-      });
-    }
 
-  }
-  
-});
-
-
-// start Game
-function checkLetter(target , given) {
-  if(target === given)return true
+function checkLetter(target, given) {
+  if (target === given) return true;
   return false;
 }
 
-function startGame() {
+// Start Game
+function startGameforTime() {
   let ind = 0;
-  let correctLetters = 0
-  timer.textContent = timeRem
-  const secondsElapsed = timeRem
-  const Int = setInterval(e => {
-      if(timeRem <= 1) {
-        clearInterval(Int)
-        resetGame(correctLetters,secondsElapsed)
-      }
-      timeRem -=1;
-      timer.textContent = timeRem
-  },1000);
-  document.addEventListener('keydown' , (e) => {
-    // console.log(allLetters[ind]);
-    
-    if(timeRem > 0) {
-        let target = allLetters[ind].textContent
-        // console.log(ind);
-        
-        if(e.key  === "Backspace") {
-           if(target === '\u00A0')ind-=1
-           if(allLetters[ind-1] === '\u00A0')ind-=1;
-           else if(allLetters[ind-1].style.color === 'red')ind--;
-           if(allLetters[ind].style.color === 'red') {
-            allLetters[ind].style.color = 'black'
-          }
+  let correctLetters = 0;
+  totalKeys = 0;
+  timer.textContent = timeRem;
+  const secondsElapsed = timeRem;
 
-        }
-        else {
-          if(target === '\u00A0') {
-            target = ' '
-            ind++;
-          }
-          if(checkLetter(target , e.key)) {
-            correctLetters++;
-            allLetters[ind].style.color = 'white';
-            // console.log("true");  
-          }
-          else {
-            allLetters[ind].style.color = 'red'
-          }
-          ind++;
-        }
+  const Int = setInterval(() => {
+    if (timeRem <= 1) {
+      clearInterval(Int);
+      document.removeEventListener("keydown", keydownHandler);
+      resetGame(correctLetters, secondsElapsed);
     }
-    
-  })
+    timeRem -= 1;
+    timer.textContent = timeRem;
+  }, 1000);
+
+  // Remove previous keydown listener
+  document.removeEventListener("keydown", keydownHandler);
+
+  // Define new keydown handler
+  keydownHandler = function (e) {
+    if (timeRem > 0) {
+      let target = allLetters[ind].textContent;
+
+      if (e.key === "Backspace") {
+        if (ind > 0) {
+          ind -= 1;
+          allLetters[ind].style.color = "white";
+        }
+      } else {
+        totalKeys += 1;
+        if (target === "\u00A0") target = " ";
+
+        if (checkLetter(target, e.key)) {
+          correctLetters++;
+          allLetters[ind].style.color = "#383e42";
+        } else {
+          allLetters[ind].style.color = "#e25303";
+        }
+        ind++;
+      }
+    }
+  };
+
+  // Attach the new keydown listener
+  document.addEventListener("keydown", keydownHandler);
 }
 
-// Reset 
-function resetGame(correctLetters , secondsElapsed) {
-  console.log(Math.round((correctLetters * 60) / (5 * secondsElapsed)));
+// for words Selected
+const setGameForWords = async function (totalWords) {
+  timeRem = 0;
+  await taskbarSelect(totalWords);
+  storeLetters();
+  // console.log(allLetters);
+  startGameForWords();
+};
+
+function startGameForWords() {
+  let ind = 0;
+  let correctLetters = 0;
+  totalKeys = 0;
+  timer.textContent = 0;
+
+  if (Int) clearInterval(Int);
+  Int = setInterval(() => {
+    if (ind >= allLetters.length - 2) {
+      clearInterval(Int);
+      console.log(ind);
+      document.removeEventListener("keydown", keydownHandler);
+      resetGame(correctLetters, timeRem);
+      return;
+    }
+    console.log("Hi");
+
+    timeRem += 1;
+    timer.textContent = timeRem;
+  }, 1000);
+
+  // Remove previous keydown listener
+  document.removeEventListener("keydown", keydownHandler);
+
+  // Define new keydown handler
+  keydownHandler = function (e) {
+    if (ind >= allLetters.length - 2) {
+      clearInterval(Int);
+      document.removeEventListener("keydown", keydownHandler);
+      resetGame(correctLetters, timeRem);
+      return;
+    }
+
+    let target = allLetters[ind].textContent;
+
+    if (e.key === "Backspace") {
+      if (ind > 0) {
+        ind -= 1;
+        allLetters[ind].style.color = "white";
+      }
+    } else {
+      totalKeys += 1;
+      if (target === "\u00A0") target = " ";
+
+      if (checkLetter(target, e.key)) {
+        correctLetters++;
+        allLetters[ind].style.color = "#383e42";
+      } else {
+        allLetters[ind].style.color = "#e25303";
+      }
+      ind++;
+    }
+  };
+
+  // Attach the new keydown listener
+  document.addEventListener("keydown", keydownHandler);
+}
+
+// Reset
+function resetGame(correctLetters, secondsElapsed) {
+  WPM = Math.round((correctLetters * 60) / (5 * secondsElapsed));
+  showStats(correctLetters);
+  timer.innerHTML = "";
+  const Restart = document.createElement("div");
+  Restart.className = "restart";
+  Restart.textContent = "Restart";
+  result = document.querySelector(".result");
+  result.appendChild(Restart);
+
+  allLetters = [];
+  timer.textContent = "";
+  timeRem;
+  totalWords = 0;
+  WPM = 0;
+  totalKeys = 0;
+  RestartGame();
+}
+// showStats of user
+
+function showStats(correct) {
+  game.innerHTML = "";
+  // console.log(correct);
+  // console.log(totalKeys);
+
+  let accuracy = ((correct / totalKeys) * 100).toFixed(2); // "92.00"
+  if (totalKeys > 0)
+    game.innerHTML = `<div class="result">
+    <div class="wpm">WPM: ${WPM}</div>
+    <div class="accuracy">Accuracy: ${accuracy}%</div>
+  </div>`;
+  else {
+    game.innerHTML = `<div class="result">
+        <div class="wpm">WPM: ${WPM}</div>
+        <div class="accuracy">Accuracy: ${0}</div>
+      </div>`;
+  }
+}
+
+// RestartGame
+function RestartGame() {
+  const restart = document.querySelector(".restart");
+  restart.addEventListener("click", (e) => {
+    game.innerHTML = "";
+    const selectSpans = document.querySelectorAll(".select span");
+    const selectAnsSpans = document.querySelectorAll(".selectAns span");
+
+    selectSpans.forEach((e) => {
+      e.style.backgroundColor = "#3c3c3c";
+      e.style.color = "#121212";
+    });
+    selectAnsSpans.forEach((e) => {
+      e.style.backgroundColor = "#3c3c3c";
+      e.style.color = "black";
+    });
+  });
 }
