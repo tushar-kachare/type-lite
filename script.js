@@ -14,30 +14,37 @@ let timeRem;
 let totalWords = 0;
 let WPM = 0;
 let totalKeys = 0;
-let Int;
+let intForTime;
+let intForWords;
+let handlerSelect;
+let handlerSelectAns;
 
 // checking for start on Time / Words
 function selectAll() {
-  select.addEventListener("click", (e) => {
-    totalWords = 0;
-    if (e.target.className !== "select") {
-      // Reset styles
-      document.querySelectorAll(".select span").forEach((span) => {
-        span.style.backgroundColor = "#3c3c3c";
-        span.style.color = "black";
-      });
+  if(handlerSelect)document.removeEventListener('click' , handlerSelect)
+  if(handlerSelectAns)document.removeEventListener('click' , handlerSelectAns)
 
-      e.target.style.color = "white";
-      e.target.style.backgroundColor = "#4fc3f7";
+  handlerSelect = function (e) {
+      totalWords = 0;
+      if (e.target.className !== "select") {
+        // Reset styles
+        document.querySelectorAll(".select span").forEach((span) => {
+          span.style.backgroundColor = "#3c3c3c";
+          span.style.color = "black";
+        });
 
-      isTimeSelection = e.target.textContent === "Time";
+        e.target.style.color = "white";
+        e.target.style.backgroundColor = "#4fc3f7";
 
-      const options = isTimeSelection ? [15, 30, 60, 120] : [10, 25, 50, 100];
-      updateSelectAns(options);
+        isTimeSelection = e.target.textContent === "Time";
+
+        const options = isTimeSelection ? [15, 30, 60, 120] : [10, 25, 50, 100];
+        updateSelectAns(options);
     }
-  });
+  }
+  select.addEventListener('click' , handlerSelect);
 
-  selectAns.addEventListener("click", (e) => {
+  handlerSelectAns = (e) => {
     if (e.target.tagName !== "SPAN") return;
 
     // Reset styles
@@ -58,13 +65,23 @@ function selectAll() {
       totalWords = parseInt(e.target.textContent);
       setGameForWords(totalWords);
     }
-  });
+  }
+  selectAns.addEventListener("click", handlerSelectAns);
+
 }
 
 selectAll();
 
+function clearPreviousGameState() {
+  clearInterval(intForTime);
+  clearInterval(intForWords);
+  // document.removeEventListener("keydown", keydownHandler);
+}
+
 // setting game for Time duration
 const setGameForTime = async function () {
+  clearPreviousGameState()
+  game.innerHTML = ''
   await taskbarSelect();
   storeLetters();
   startGameforTime();
@@ -72,6 +89,9 @@ const setGameForTime = async function () {
 
 // Genrate words and adding to game
 const generateWords = function (str) {
+
+  // clear game div before
+  game.innerHTML = ''
   wordList = str.split(" ");
   wordList.forEach((word) => {
     const outerSpan = document.createElement("span");
@@ -143,10 +163,10 @@ function startGameforTime() {
   totalKeys = 0;
   timer.textContent = timeRem;
   const secondsElapsed = timeRem;
-
-  const Int = setInterval(() => {
+  clearInterval(intForTime)
+  intForTime = setInterval(() => {
     if (timeRem <= 1) {
-      clearInterval(Int);
+      clearInterval(intForTime);
       document.removeEventListener("keydown", keydownHandler);
       resetGame(correctLetters, secondsElapsed);
     }
@@ -188,6 +208,8 @@ function startGameforTime() {
 
 // for words Selected
 const setGameForWords = async function (totalWords) {
+  clearPreviousGameState()
+  game.innerHTML = ''
   timeRem = 0;
   await taskbarSelect(totalWords);
   storeLetters();
@@ -200,10 +222,10 @@ function startGameForWords() {
   totalKeys = 0;
   timer.textContent = 0;
 
-  if (Int) clearInterval(Int);
-  Int = setInterval(() => {
+  clearInterval(intForWords);
+  intForWords = setInterval(() => {
     if (ind >= allLetters.length - 2) {
-      clearInterval(Int);
+      clearInterval(intForWords);
       document.removeEventListener("keydown", keydownHandler);
       resetGame(correctLetters, timeRem);
       return;
@@ -246,7 +268,6 @@ function startGameForWords() {
     }
   };
 
-  // Attach the new keydown listener
   document.addEventListener("keydown", keydownHandler);
 }
 
